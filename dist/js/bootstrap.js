@@ -1,6 +1,7 @@
 /*!
- * Bootstrap v3.4.1 (https://getbootstrap.com/)
- * Copyright 2011-2019 Twitter, Inc.
+ * Bootstrap v3.4.1-nozomi1 (https://getbootstrap.com/)
+ * Copyright 2011-2025 Twitter, Inc.
+ * Copyright 2025 Nozomi Networks (security fixes)
  * Licensed under the MIT license
  */
 
@@ -17,11 +18,12 @@ if (typeof jQuery === 'undefined') {
 }(jQuery);
 
 /* ========================================================================
- * Bootstrap: transition.js v3.4.1
+ * Bootstrap: transition.js v3.4.1-nozomi1
  * https://getbootstrap.com/docs/3.4/javascript/#transitions
  * ========================================================================
  * Copyright 2011-2019 Twitter, Inc.
- * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
+ * Copyright 2025 Nozomi Networks (security fixes)
+ * Licensed under MIT (https://github.com/NozomiNetworks/bootstrap/blob/master/LICENSE)
  * ======================================================================== */
 
 
@@ -77,11 +79,12 @@ if (typeof jQuery === 'undefined') {
 }(jQuery);
 
 /* ========================================================================
- * Bootstrap: alert.js v3.4.1
+ * Bootstrap: alert.js v3.4.1-nozomi1
  * https://getbootstrap.com/docs/3.4/javascript/#alerts
  * ========================================================================
  * Copyright 2011-2019 Twitter, Inc.
- * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
+ * Copyright 2025 Nozomi Networks (security fixes)
+ * Licensed under MIT (https://github.com/NozomiNetworks/bootstrap/blob/master/LICENSE)
  * ======================================================================== */
 
 
@@ -96,7 +99,7 @@ if (typeof jQuery === 'undefined') {
     $(el).on('click', dismiss, this.close)
   }
 
-  Alert.VERSION = '3.4.1'
+  Alert.VERSION = '3.4.1-nozomi1'
 
   Alert.TRANSITION_DURATION = 150
 
@@ -173,16 +176,149 @@ if (typeof jQuery === 'undefined') {
 }(jQuery);
 
 /* ========================================================================
- * Bootstrap: button.js v3.4.1
+ * Bootstrap: button.js v3.4.1-nozomi1
  * https://getbootstrap.com/docs/3.4/javascript/#buttons
  * ========================================================================
  * Copyright 2011-2019 Twitter, Inc.
- * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
+ * Copyright 2025 Nozomi Networks (security fixes)
+ * Licensed under MIT (https://github.com/NozomiNetworks/bootstrap/blob/master/LICENSE)
  * ======================================================================== */
 
 
 +function ($) {
   'use strict';
+
+  // Validation logic from tooltip.js
+  var DISALLOWED_ATTRIBUTES = ['sanitize', 'whiteList', 'sanitizeFn']
+
+  var uriAttrs = [
+    'background',
+    'cite',
+    'href',
+    'itemtype',
+    'longdesc',
+    'poster',
+    'src',
+    'xlink:href'
+  ]
+
+  var ARIA_ATTRIBUTE_PATTERN = /^aria-[\w-]*$/i
+
+  var DefaultWhitelist = {
+    // Global attributes allowed on any supplied element below.
+    '*': ['class', 'dir', 'id', 'lang', 'role', ARIA_ATTRIBUTE_PATTERN],
+    a: ['target', 'href', 'title', 'rel'],
+    area: [],
+    b: [],
+    br: [],
+    col: [],
+    code: [],
+    div: [],
+    em: [],
+    hr: [],
+    h1: [],
+    h2: [],
+    h3: [],
+    h4: [],
+    h5: [],
+    h6: [],
+    i: [],
+    img: ['src', 'alt', 'title', 'width', 'height'],
+    li: [],
+    ol: [],
+    p: [],
+    pre: [],
+    s: [],
+    small: [],
+    span: [],
+    sub: [],
+    sup: [],
+    strong: [],
+    u: [],
+    ul: []
+  }
+
+  /**
+   * A pattern that recognizes a commonly useful subset of URLs that are safe.
+   *
+   * Shoutout to Angular 7 https://github.com/angular/angular/blob/7.2.4/packages/core/src/sanitization/url_sanitizer.ts
+   */
+  var SAFE_URL_PATTERN = /^(?:(?:https?|mailto|ftp|tel|file):|[^&:/?#]*(?:[/?#]|$))/gi
+
+  /**
+   * A pattern that matches safe data URLs. Only matches image, video and audio types.
+   *
+   * Shoutout to Angular 7 https://github.com/angular/angular/blob/7.2.4/packages/core/src/sanitization/url_sanitizer.ts
+   */
+  var DATA_URL_PATTERN = /^data:(?:image\/(?:bmp|gif|jpeg|jpg|png|tiff|webp)|video\/(?:mpeg|mp4|ogg|webm)|audio\/(?:mp3|oga|ogg|opus));base64,[a-z0-9+/]+=*$/i
+
+  function allowedAttribute(attr, allowedAttributeList) {
+    var attrName = attr.nodeName.toLowerCase()
+
+    if ($.inArray(attrName, allowedAttributeList) !== -1) {
+      if ($.inArray(attrName, uriAttrs) !== -1) {
+        return Boolean(attr.nodeValue.match(SAFE_URL_PATTERN) || attr.nodeValue.match(DATA_URL_PATTERN))
+      }
+
+      return true
+    }
+
+    var regExp = $(allowedAttributeList).filter(function (index, value) {
+      return value instanceof RegExp
+    })
+
+    // Check if a regular expression validates the attribute.
+    for (var i = 0, l = regExp.length; i < l; i++) {
+      if (attrName.match(regExp[i])) {
+        return true
+      }
+    }
+
+    return false
+  }
+
+  function sanitizeHtml(unsafeHtml, whiteList, sanitizeFn) {
+    if (unsafeHtml.length === 0) {
+      return unsafeHtml
+    }
+
+    if (sanitizeFn && typeof sanitizeFn === 'function') {
+      return sanitizeFn(unsafeHtml)
+    }
+
+    // IE 8 and below don't support createHTMLDocument
+    if (!document.implementation || !document.implementation.createHTMLDocument) {
+      return unsafeHtml
+    }
+
+    var createdDocument = document.implementation.createHTMLDocument('sanitization')
+    createdDocument.body.innerHTML = unsafeHtml
+
+    var whitelistKeys = $.map(whiteList, function (el, i) { return i })
+    var elements = $(createdDocument.body).find('*')
+
+    for (var i = 0, len = elements.length; i < len; i++) {
+      var el = elements[i]
+      var elName = el.nodeName.toLowerCase()
+
+      if ($.inArray(elName, whitelistKeys) === -1) {
+        el.parentNode.removeChild(el)
+
+        continue
+      }
+
+      var attributeList = $.map(el.attributes, function (el) { return el })
+      var whitelistedAttributes = [].concat(whiteList['*'] || [], whiteList[elName] || [])
+
+      for (var j = 0, len2 = attributeList.length; j < len2; j++) {
+        if (!allowedAttribute(attributeList[j], whitelistedAttributes)) {
+          el.removeAttribute(attributeList[j].nodeName)
+        }
+      }
+    }
+
+    return createdDocument.body.innerHTML
+  }
 
   // BUTTON PUBLIC CLASS DEFINITION
   // ==============================
@@ -193,7 +329,7 @@ if (typeof jQuery === 'undefined') {
     this.isLoading = false
   }
 
-  Button.VERSION  = '3.4.1'
+  Button.VERSION  = '3.4.1-nozomi1'
 
   Button.DEFAULTS = {
     loadingText: 'loading...'
@@ -211,7 +347,13 @@ if (typeof jQuery === 'undefined') {
 
     // push to event loop to allow forms to submit
     setTimeout($.proxy(function () {
-      $el[val](data[state] == null ? this.options[state] : data[state])
+      var stateValue = data[state] == null ? this.options[state] : data[state]
+
+      if (val === 'html' && stateValue != null) {
+        stateValue = sanitizeHtml(stateValue, DefaultWhitelist)
+      }
+
+      $el[val](stateValue)
 
       if (state == 'loadingText') {
         this.isLoading = true
@@ -299,11 +441,12 @@ if (typeof jQuery === 'undefined') {
 }(jQuery);
 
 /* ========================================================================
- * Bootstrap: carousel.js v3.4.1
+ * Bootstrap: carousel.js v3.4.1-nozomi1
  * https://getbootstrap.com/docs/3.4/javascript/#carousel
  * ========================================================================
  * Copyright 2011-2019 Twitter, Inc.
- * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
+ * Copyright 2025 Nozomi Networks (security fixes)
+ * Licensed under MIT (https://github.com/NozomiNetworks/bootstrap/blob/master/LICENSE)
  * ======================================================================== */
 
 
@@ -330,7 +473,7 @@ if (typeof jQuery === 'undefined') {
       .on('mouseleave.bs.carousel', $.proxy(this.cycle, this))
   }
 
-  Carousel.VERSION  = '3.4.1'
+  Carousel.VERSION  = '3.4.1-nozomi1'
 
   Carousel.TRANSITION_DURATION = 600
 
@@ -507,14 +650,159 @@ if (typeof jQuery === 'undefined') {
   // CAROUSEL DATA-API
   // =================
 
+  // Validation logic from tooltip.js
+  var DISALLOWED_ATTRIBUTES = ['sanitize', 'whiteList', 'sanitizeFn']
+
+  var uriAttrs = [
+    'background',
+    'cite',
+    'href',
+    'itemtype',
+    'longdesc',
+    'poster',
+    'src',
+    'xlink:href'
+  ]
+
+  var ARIA_ATTRIBUTE_PATTERN = /^aria-[\w-]*$/i
+
+  var DefaultWhitelist = {
+    // Global attributes allowed on any supplied element below.
+    '*': ['class', 'dir', 'id', 'lang', 'role', ARIA_ATTRIBUTE_PATTERN],
+    a: ['target', 'href', 'title', 'rel'],
+    area: [],
+    b: [],
+    br: [],
+    col: [],
+    code: [],
+    div: [],
+    em: [],
+    hr: [],
+    h1: [],
+    h2: [],
+    h3: [],
+    h4: [],
+    h5: [],
+    h6: [],
+    i: [],
+    img: ['src', 'alt', 'title', 'width', 'height'],
+    li: [],
+    ol: [],
+    p: [],
+    pre: [],
+    s: [],
+    small: [],
+    span: [],
+    sub: [],
+    sup: [],
+    strong: [],
+    u: [],
+    ul: []
+  }
+
+  /**
+   * A pattern that recognizes a commonly useful subset of URLs that are safe.
+   *
+   * Shoutout to Angular 7 https://github.com/angular/angular/blob/7.2.4/packages/core/src/sanitization/url_sanitizer.ts
+   */
+  var SAFE_URL_PATTERN = /^(?:(?:https?|mailto|ftp|tel|file):|[^&:/?#]*(?:[/?#]|$))/gi
+
+  /**
+   * A pattern that matches safe data URLs. Only matches image, video and audio types.
+   *
+   * Shoutout to Angular 7 https://github.com/angular/angular/blob/7.2.4/packages/core/src/sanitization/url_sanitizer.ts
+   */
+  var DATA_URL_PATTERN = /^data:(?:image\/(?:bmp|gif|jpeg|jpg|png|tiff|webp)|video\/(?:mpeg|mp4|ogg|webm)|audio\/(?:mp3|oga|ogg|opus));base64,[a-z0-9+/]+=*$/i
+
+  function isUrlSafe(url) {
+    return Boolean(url.match(SAFE_URL_PATTERN) || url.match(DATA_URL_PATTERN))
+  }
+
+  function allowedAttribute(attr, allowedAttributeList) {
+    var attrName = attr.nodeName.toLowerCase()
+
+    if ($.inArray(attrName, allowedAttributeList) !== -1) {
+      if ($.inArray(attrName, uriAttrs) !== -1) {
+        return Boolean(attr.nodeValue.match(SAFE_URL_PATTERN) || attr.nodeValue.match(DATA_URL_PATTERN))
+      }
+
+      return true
+    }
+
+    var regExp = $(allowedAttributeList).filter(function (index, value) {
+      return value instanceof RegExp
+    })
+
+    // Check if a regular expression validates the attribute.
+    for (var i = 0, l = regExp.length; i < l; i++) {
+      if (attrName.match(regExp[i])) {
+        return true
+      }
+    }
+
+    return false
+  }
+
+  function sanitizeHtml(unsafeHtml, whiteList, sanitizeFn) {
+    if (unsafeHtml.length === 0) {
+      return unsafeHtml
+    }
+
+    if (sanitizeFn && typeof sanitizeFn === 'function') {
+      return sanitizeFn(unsafeHtml)
+    }
+
+    // IE 8 and below don't support createHTMLDocument
+    if (!document.implementation || !document.implementation.createHTMLDocument) {
+      return unsafeHtml
+    }
+
+    var createdDocument = document.implementation.createHTMLDocument('sanitization')
+    createdDocument.body.innerHTML = unsafeHtml
+
+    var whitelistKeys = $.map(whiteList, function (el, i) { return i })
+    var elements = $(createdDocument.body).find('*')
+
+    for (var i = 0, len = elements.length; i < len; i++) {
+      var el = elements[i]
+      var elName = el.nodeName.toLowerCase()
+
+      if ($.inArray(elName, whitelistKeys) === -1) {
+        el.parentNode.removeChild(el)
+
+        continue
+      }
+
+      var attributeList = $.map(el.attributes, function (el) { return el })
+      var whitelistedAttributes = [].concat(whiteList['*'] || [], whiteList[elName] || [])
+
+      for (var j = 0, len2 = attributeList.length; j < len2; j++) {
+        if (!allowedAttribute(attributeList[j], whitelistedAttributes)) {
+          el.removeAttribute(attributeList[j].nodeName)
+        }
+      }
+    }
+
+    return createdDocument.body.innerHTML
+  }
+
   var clickHandler = function (e) {
     var $this   = $(this)
     var href    = $this.attr('href')
+
+    // Block execution if href contains unsafe URL like javascript:
+    if (href && !isUrlSafe(href)) {
+      e.preventDefault()
+      e.stopPropagation()
+      return
+    }
+
     if (href) {
       href = href.replace(/.*(?=#[^\s]+$)/, '') // strip for ie7
     }
 
     var target  = $this.attr('data-target') || href
+    target = sanitizeHtml(target, DefaultWhitelist)
     var $target = $(document).find(target)
 
     if (!$target.hasClass('carousel')) return
@@ -546,11 +834,12 @@ if (typeof jQuery === 'undefined') {
 }(jQuery);
 
 /* ========================================================================
- * Bootstrap: collapse.js v3.4.1
+ * Bootstrap: collapse.js v3.4.1-nozomi1
  * https://getbootstrap.com/docs/3.4/javascript/#collapse
  * ========================================================================
  * Copyright 2011-2019 Twitter, Inc.
- * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
+ * Copyright 2025 Nozomi Networks (security fixes)
+ * Licensed under MIT (https://github.com/NozomiNetworks/bootstrap/blob/master/LICENSE)
  * ======================================================================== */
 
 /* jshint latedef: false */
@@ -577,7 +866,7 @@ if (typeof jQuery === 'undefined') {
     if (this.options.toggle) this.toggle()
   }
 
-  Collapse.VERSION  = '3.4.1'
+  Collapse.VERSION  = '3.4.1-nozomi1'
 
   Collapse.TRANSITION_DURATION = 350
 
@@ -759,11 +1048,12 @@ if (typeof jQuery === 'undefined') {
 }(jQuery);
 
 /* ========================================================================
- * Bootstrap: dropdown.js v3.4.1
+ * Bootstrap: dropdown.js v3.4.1-nozomi1
  * https://getbootstrap.com/docs/3.4/javascript/#dropdowns
  * ========================================================================
  * Copyright 2011-2019 Twitter, Inc.
- * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
+ * Copyright 2025 Nozomi Networks (security fixes)
+ * Licensed under MIT (https://github.com/NozomiNetworks/bootstrap/blob/master/LICENSE)
  * ======================================================================== */
 
 
@@ -779,7 +1069,7 @@ if (typeof jQuery === 'undefined') {
     $(element).on('click.bs.dropdown', this.toggle)
   }
 
-  Dropdown.VERSION = '3.4.1'
+  Dropdown.VERSION = '3.4.1-nozomi1'
 
   function getParent($this) {
     var selector = $this.attr('data-target')
@@ -925,11 +1215,12 @@ if (typeof jQuery === 'undefined') {
 }(jQuery);
 
 /* ========================================================================
- * Bootstrap: modal.js v3.4.1
+ * Bootstrap: modal.js v3.4.1-nozomi1
  * https://getbootstrap.com/docs/3.4/javascript/#modals
  * ========================================================================
  * Copyright 2011-2019 Twitter, Inc.
- * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
+ * Copyright 2025 Nozomi Networks (security fixes)
+ * Licensed under MIT (https://github.com/NozomiNetworks/bootstrap/blob/master/LICENSE)
  * ======================================================================== */
 
 
@@ -960,7 +1251,7 @@ if (typeof jQuery === 'undefined') {
     }
   }
 
-  Modal.VERSION = '3.4.1'
+  Modal.VERSION = '3.4.1-nozomi1'
 
   Modal.TRANSITION_DURATION = 300
   Modal.BACKDROP_TRANSITION_DURATION = 150
@@ -1284,12 +1575,13 @@ if (typeof jQuery === 'undefined') {
 }(jQuery);
 
 /* ========================================================================
- * Bootstrap: tooltip.js v3.4.1
+ * Bootstrap: tooltip.js v3.4.1-nozomi1
  * https://getbootstrap.com/docs/3.4/javascript/#tooltip
  * Inspired by the original jQuery.tipsy by Jason Frame
  * ========================================================================
  * Copyright 2011-2019 Twitter, Inc.
- * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
+ * Copyright 2025 Nozomi Networks (security fixes)
+ * Licensed under MIT (https://github.com/NozomiNetworks/bootstrap/blob/master/LICENSE)
  * ======================================================================== */
 
 +function ($) {
@@ -1441,7 +1733,7 @@ if (typeof jQuery === 'undefined') {
     this.init('tooltip', element, options)
   }
 
-  Tooltip.VERSION  = '3.4.1'
+  Tooltip.VERSION  = '3.4.1-nozomi1'
 
   Tooltip.TRANSITION_DURATION = 150
 
@@ -1800,12 +2092,12 @@ if (typeof jQuery === 'undefined') {
 
     var elRect    = el.getBoundingClientRect()
     if (elRect.width == null) {
-      // width and height are missing in IE8, so compute them manually; see https://github.com/twbs/bootstrap/issues/14093
+      // width and height are missing in IE8, so compute them manually; see https://github.com/NozomiNetworks/bootstrap/issues/14093
       elRect = $.extend({}, elRect, { width: elRect.right - elRect.left, height: elRect.bottom - elRect.top })
     }
     var isSvg = window.SVGElement && el instanceof window.SVGElement
     // Avoid using $.offset() on SVGs since it gives incorrect results in jQuery 3.
-    // See https://github.com/twbs/bootstrap/issues/20280
+    // See https://github.com/NozomiNetworks/bootstrap/issues/20280
     var elOffset  = isBody ? { top: 0, left: 0 } : (isSvg ? null : $element.offset())
     var scroll    = { scroll: isBody ? document.documentElement.scrollTop || document.body.scrollTop : $element.scrollTop() }
     var outerDims = isBody ? { width: $(window).width(), height: $(window).height() } : null
@@ -1962,11 +2254,12 @@ if (typeof jQuery === 'undefined') {
 }(jQuery);
 
 /* ========================================================================
- * Bootstrap: popover.js v3.4.1
+ * Bootstrap: popover.js v3.4.1-nozomi1
  * https://getbootstrap.com/docs/3.4/javascript/#popovers
  * ========================================================================
  * Copyright 2011-2019 Twitter, Inc.
- * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
+ * Copyright 2025 Nozomi Networks (security fixes)
+ * Licensed under MIT (https://github.com/NozomiNetworks/bootstrap/blob/master/LICENSE)
  * ======================================================================== */
 
 
@@ -1982,7 +2275,7 @@ if (typeof jQuery === 'undefined') {
 
   if (!$.fn.tooltip) throw new Error('Popover requires tooltip.js')
 
-  Popover.VERSION  = '3.4.1'
+  Popover.VERSION  = '3.4.1-nozomi1'
 
   Popover.DEFAULTS = $.extend({}, $.fn.tooltip.Constructor.DEFAULTS, {
     placement: 'right',
@@ -2086,11 +2379,12 @@ if (typeof jQuery === 'undefined') {
 }(jQuery);
 
 /* ========================================================================
- * Bootstrap: scrollspy.js v3.4.1
+ * Bootstrap: scrollspy.js v3.4.1-nozomi1
  * https://getbootstrap.com/docs/3.4/javascript/#scrollspy
  * ========================================================================
  * Copyright 2011-2019 Twitter, Inc.
- * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
+ * Copyright 2025 Nozomi Networks (security fixes)
+ * Licensed under MIT (https://github.com/NozomiNetworks/bootstrap/blob/master/LICENSE)
  * ======================================================================== */
 
 
@@ -2115,7 +2409,7 @@ if (typeof jQuery === 'undefined') {
     this.process()
   }
 
-  ScrollSpy.VERSION  = '3.4.1'
+  ScrollSpy.VERSION  = '3.4.1-nozomi1'
 
   ScrollSpy.DEFAULTS = {
     offset: 10
@@ -2259,11 +2553,12 @@ if (typeof jQuery === 'undefined') {
 }(jQuery);
 
 /* ========================================================================
- * Bootstrap: tab.js v3.4.1
+ * Bootstrap: tab.js v3.4.1-nozomi1
  * https://getbootstrap.com/docs/3.4/javascript/#tabs
  * ========================================================================
  * Copyright 2011-2019 Twitter, Inc.
- * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
+ * Copyright 2025 Nozomi Networks (security fixes)
+ * Licensed under MIT (https://github.com/NozomiNetworks/bootstrap/blob/master/LICENSE)
  * ======================================================================== */
 
 
@@ -2279,7 +2574,7 @@ if (typeof jQuery === 'undefined') {
     // jscs:enable requireDollarBeforejQueryAssignment
   }
 
-  Tab.VERSION = '3.4.1'
+  Tab.VERSION = '3.4.1-nozomi1'
 
   Tab.TRANSITION_DURATION = 150
 
@@ -2415,11 +2710,12 @@ if (typeof jQuery === 'undefined') {
 }(jQuery);
 
 /* ========================================================================
- * Bootstrap: affix.js v3.4.1
+ * Bootstrap: affix.js v3.4.1-nozomi1
  * https://getbootstrap.com/docs/3.4/javascript/#affix
  * ========================================================================
  * Copyright 2011-2019 Twitter, Inc.
- * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
+ * Copyright 2025 Nozomi Networks (security fixes)
+ * Licensed under MIT (https://github.com/NozomiNetworks/bootstrap/blob/master/LICENSE)
  * ======================================================================== */
 
 
@@ -2446,7 +2742,7 @@ if (typeof jQuery === 'undefined') {
     this.checkPosition()
   }
 
-  Affix.VERSION  = '3.4.1'
+  Affix.VERSION  = '3.4.1-nozomi1'
 
   Affix.RESET    = 'affix affix-top affix-bottom'
 

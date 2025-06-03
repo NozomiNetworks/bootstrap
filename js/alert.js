@@ -1,9 +1,10 @@
 /* ========================================================================
- * Bootstrap: alert.js v3.4.1
+ * Bootstrap: alert.js v3.4.1-nozomi1
  * https://getbootstrap.com/docs/3.4/javascript/#alerts
  * ========================================================================
  * Copyright 2011-2019 Twitter, Inc.
- * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
+ * Copyright 2025 Nozomi Networks (security fixes)
+ * Licensed under MIT (https://github.com/NozomiNetworks/bootstrap/blob/master/LICENSE)
  * ======================================================================== */
 
 
@@ -18,7 +19,7 @@
     $(el).on('click', dismiss, this.close)
   }
 
-  Alert.VERSION = '3.4.1'
+  Alert.VERSION = '3.4.1-nozomi1'
 
   Alert.TRANSITION_DURATION = 150
 

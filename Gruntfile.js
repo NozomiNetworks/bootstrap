@@ -2,7 +2,8 @@
  * Bootstrap's Gruntfile
  * https://getbootstrap.com/
  * Copyright 2013-2019 Twitter, Inc.
- * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
+ * Copyright 2025 Nozomi Networks (security fixes)
+ * Licensed under MIT (https://github.com/NozomiNetworks/bootstrap/blob/master/LICENSE)
  */
 
 module.exports = function (grunt) {
@@ -43,6 +44,7 @@ module.exports = function (grunt) {
     banner: '/*!\n' +
             ' * Bootstrap v<%= pkg.version %> (<%= pkg.homepage %>)\n' +
             ' * Copyright 2011-<%= grunt.template.today("yyyy") %> <%= pkg.author %>\n' +
+            ' * Copyright 2025 Nozomi Networks (security fixes)\n' +
             ' * Licensed under the <%= pkg.license %> license\n' +
             ' */\n',
     jqueryCheck: configBridge.config.jqueryCheck.join('\n'),
