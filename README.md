@@ -15,6 +15,7 @@ To get started, check out <https://getbootstrap.com/>!
 ## Table of contents
 
 * [Quick start](#quick-start)
+* [Security fixes](#security-fixes)
 * [Bugs and feature requests](#bugs-and-feature-requests)
 * [Documentation](#documentation)
 * [Contributing](#contributing)
@@ -25,12 +26,21 @@ To get started, check out <https://getbootstrap.com/>!
 * [Copyright and license](#copyright-and-license)
 
 
+## Security fixes
+
+This version includes fixes for the following CVEs:
+
+- **CVE-2024-6484**: Fixed XSS vulnerability in the Carousel component where unsanitized href and data-target attributes could be exploited
+- **CVE-2024-6485**: Fixed XSS vulnerability in the Button component
+
+These fixes were contributed by Nozomi Networks in May 2025.
+
 ## Quick start
 
 Several quick start options are available:
 
-* [Download the latest release](https://github.com/twbs/bootstrap/archive/v3.4.1.zip).
-* Clone the repo: `git clone https://github.com/twbs/bootstrap.git`.
+* [Download the latest release](https://github.com/NozomiNetworks/bootstrap/archive/v3.4.1-nozomi1.zip).
+* Clone the repo: `git clone https://github.com/NozomiNetworks/bootstrap.git`.
 * Install with [Bower](https://bower.io/): `bower install bootstrap`.
 * Install with [npm](https://www.npmjs.com/): `npm install bootstrap@3`.
 * Install with [Meteor](https://www.meteor.com/): `meteor add twbs:bootstrap`.
@@ -147,3 +157,4 @@ Thanks to [BrowserStack](https://www.browserstack.com/) for providing the infras
 ## Copyright and license
 
 Code and documentation copyright 2011-2019 Twitter, Inc. Code released under [the MIT license](https://github.com/twbs/bootstrap/blob/master/LICENSE). Docs released under [Creative Commons](https://github.com/twbs/bootstrap/blob/master/docs/LICENSE).
+Security fixes copyright 2025 Nozomi Networks

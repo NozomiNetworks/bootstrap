@@ -1,6 +1,7 @@
 {
   "name": "bootstrap",
   "description": "The most popular front-end framework for developing responsive, mobile first projects on the web.",
+  "version": "3.4.1-nozomi1",
   "keywords": [
     "css",
     "js",
